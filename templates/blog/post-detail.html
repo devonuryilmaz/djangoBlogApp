@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block title %}
+    {{ blog.title }}
+{% endblock title %}
+
+{% block ust_icerik %}
+
+    <script type="text/javascript" rel="script">
+        $(document).ready(function(){
+            var $window = $(this);
+            var $blog_comment_list = $window.find('#blog_comment_list');
+            $window.on('submit', '#postComment', function(e){
+                e.preventDefault();
+                var $this = $(this);
+                var $method = $this.attr('method');
+                var $data = $this.serialize();
+                var $url = $this.attr('action');
+
+                $.ajax({
+                    url: $url,
+                    type: $method,
+                    dataType: "json",
+                    data: $data,
+                    success : function(data){
+                        $blog_comment_list.html(data.blog_comment_html)
+                        $this.find('#id_icerik').val('');
+                    },
+                    error :function(){
+                        alert("Hata");
+                    }
+                });
+            });
+
+            $window.on('click','#blog_comment_list div.row a.yanitla-button', function(e){
+                e.preventDefault();
+                var $this = $(this);
+                var $parent = $this.closest('div');
+                var $href = $this.attr('href');
+                var $comment_pk = $this.attr('comment_pk');
+
+                $.ajax({
+                    url: $href,
+                    type:"GET",
+                    dataType: "json",
+                    data:{'comment_pk': $comment_pk},
+                    success: function(data){
+                        $form_html = data.form_html;
+                        $parent.find('.child-form-container').html($form_html);
+                    },
+                    error: function(){
+                        alert("Hata");
+                    }
+                })
+
+            });
+        })        
+    </script>
+
+{% endblock ust_icerik %}
+
+{% block icerik %}
+<style>
+.django-ckeditor-widget{
+    display: unset !important ;
+}
+</style>
+<div class="row">
+    <div class="col-lg-12">
+
+        <div class="col-lg-8 col-lg-offset-2">
+            <h2 class="page-header"> <a href="{% url 'post-list' %}"> 
+            <span class="glyphicon glyphicon-circle-arrow-left" ></span></a> {{ blog.title | upper}} 
+            {{ blog.get_yayin_taslak_html}}
+            <a href="{% url 'favorite' blog.slug %}?next={% url 'post-detail' blog.slug %}" class="btn btn-sm btn-default">
+            <span class="glyphicon glyphicon-star {% if request.user.username in blog.get_added_favorite_user %}active{% endif %}"></span>
+            </a>
+            <small class="pull-right"> <span class="glyphicon glyphicon-time"> </span> {{blog.createdDate}} </small>
+            </h2>
+            <p><b><span class="glyphicon glyphicon-user"></span>Yazar - 
+            <a href="{% url 'user-profile' blog.user.username %}">{{blog.user.userprofile.getScreenName}} </a></b></p>
+            {% if blog.get_image %}
+            <div>
+                <img class="img-responsive" src="{{ blog.get_image }}" >
+            </div>
+            {% endif %}
+            <p class="lead"> {{ blog.icerik | safe}} </p>
+            <p class="lead">
+                Kategoriler: {{ blog.kategoriler.all | join:', ' }}
+            </p>
+            {% if request.user == blog.user %}
+                <div class="row" style="margin-bottom:1rem">
+                    <a class="btn btn-warning btn-sm" href="{% url 'post-update' blog.slug %}">Güncelle</a>
+                    <a class="btn btn-danger btn-sm" href="{% url 'post-delete' blog.slug %}">Sil</a>
+                </div>
+            {% endif %}
+            <div class="row">
+                <h2 class="page-header">Yorumlar ({{ blog.get_blog_comment_count }})</h2>
+                <div id="blog_comment_list" class="col-lg-12"> 
+                {% include 'blog/include/comment/comment-list-partial.html' with blog=blog %}
+                </div>
+            </div>
+            <div class="row" style="margin-top:2rem">
+                <form id="postComment" action="{% url 'add-new-comment' blog.pk 'blog' %}" method="POST">
+                {% csrf_token %}
+                {{ form.media }}
+                {% for field in form %}
+                    <div class="row">
+                    <div class="col-lg-2">
+                        <img style="height:5rem; float:right" class="img-responsive img-circle" src="{{ request.user.userprofile.getProfilePhoto }}">
+                    </div>
+                        <div class="col-lg-10">
+                            <div class="form-group">
+                                <label class="control-label" for="{{ field.id_for_label }}">
+                                    {{ field.label}}:
+                                </label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    {% for error in field.errors %}
+                                        <span class="text-danger"><b> {{error}} </b></span>
+                                    {% endfor %}
+                                {% else %}
+                                    {% if field.help_text %}
+                                        <span class = "text-success"><b>{{ field.help_text}}</b></span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>        
+                    </div>
+                {% endfor %}
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="form-group">
+                            <input type="submit" value="Yorum Yap" class="pull-right btn btn-success">
+                        </div>
+                    </div>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock icerik %}

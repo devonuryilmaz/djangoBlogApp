@@ -1,0 +1,31 @@
+{% load following_system %}
+
+{% for row in following %}
+    <div class="follow col-lg-12" style="margin-bottom:1rem">
+        {% if follow_type == "takipciler" %}
+            <img class="img-circle" style="width:5rem;" src="{{ row.follower.userprofile.getProfilePhoto }}">
+            <span follower="{{request.user}}" followed = "{{ row.follower.username}}"> {{ row.follower.username }} </span>
+            {% if row.follower != request.user %}
+                {%if row.follower|who_is_my_followed:my_followeds %}
+                    {% include "following/profile/include/button_include/unfollow_button.html" %}
+                {% else %}
+                    {% include "following/profile/include/button_include/follow_button.html" %}
+                {% endif %} 
+            {% endif %}
+        {% elif follow_type == "takip_edilenler" %}
+            <img class="img-circle" style="width:5rem;" src="{{ row.followed.userprofile.getProfilePhoto }}">
+            <span  follower="{{request.user}}" followed = "{{ row.followed.username}}"> {{ row.followed.username }} </span>
+            {% if row.followed != request.user %}
+                {%if row.followed|who_is_my_followed:my_followeds %}
+                    {% include "following/profile/include/button_include/unfollow_button.html" %}
+                {% else %}
+                    {% include "following/profile/include/button_include/follow_button.html" %}
+                {% endif %} 
+            {% endif %}
+        {% endif %}
+    </div>
+{% empty %}
+    <p class="lead text-center text-danger">
+        Herhangi bir sonuç bulunamadı.
+    </p>
+{% endfor %}

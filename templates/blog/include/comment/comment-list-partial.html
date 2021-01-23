@@ -1,0 +1,44 @@
+{% for comment in blog.get_blog_new_comments %}
+<div class="row" style="margin-bottom:2rem;">
+    <div>
+        <div class="col-lg-1">
+            <img style="height:3rem; float:right" class="img-responsive img-circle" src="{{ comment.user.userprofile.getProfilePhoto }}">
+        </div>
+        <div class="col-lg-11">
+            <span style="font-weight:bold">{{ comment.user.userprofile.getScreenName }}</span>
+            {{ comment.icerik | safe }} 
+            <br>
+            <span class="pull-right" style="font-weight:bold">
+                <span class="glyphicon glyphicon-time"></span>
+            {{ comment.yorum_tarihi |timesince}} önce
+            </span>
+            <a comment_pk = "{{comment.pk}}" href="{% url 'get_child_comment_form' %}" class="yanitla-button">Yanıtla..</a>
+            
+            <div>
+                {% if comment.is_parent %}
+                    {% for child_comment in comment.get_child_comments %}
+                    <div style="margin-top:1rem">
+                            <div class="col-lg-1" style="padding:0;margin-bottom:1rem">
+                                <img style="height:3rem;" class="img-responsive img-circle" src="{{ child_comment.user.userprofile.getProfilePhoto }}">
+                            </div>
+                            <div class="col-lg-11" style="padding:0;margin-bottom:1rem">
+                                <span style="font-weight:bold">{{ child_comment.user.userprofile.getScreenName }}</span>
+                                {{ child_comment.icerik | safe }}
+                                <br>
+                                <span class="pull-right" style="font-weight:bold">
+                                    <span class="glyphicon glyphicon-time"></span>
+                                {{ child_comment.yorum_tarihi |timesince}} önce
+                                </span> 
+                            </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                {% endif %}
+            </div>
+            
+            <div class="child-form-container">
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}

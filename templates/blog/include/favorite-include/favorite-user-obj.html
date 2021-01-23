@@ -1,0 +1,21 @@
+{% load following_system %}
+
+<div style="float:left; width:100%; padding-left: 2rem; padding-bottom: 2rem;">
+    <div style="float:left; width:10%;  height:5rem;">
+        <img class="img-responsive img-circle" src = "{{ user.userprofile.getProfilePhoto}}">
+    </div>
+    <div style="float:left; margin-left:1.5rem; margin-top:1.25rem;width:80%">
+        <div style="float:left;">
+            <span>{{ user.userprofile.getScreenName }}</span> 
+        </div>
+        <div style="float:right; width:20%">
+        {% if user.username != request.user.username %}
+            {%if user|who_is_my_followed:my_followed_users %}
+                {% include "blog/include/favorite-include/buttons/unfollow_button.html" %}
+            {% else %}
+                {% include "blog/include/favorite-include/buttons/follow_button.html" %}
+            {% endif %} 
+        {% endif %}
+        </div>
+    </div>
+</div>

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}
+İletişim
+{% endblock %}
+{% block icerik %}
+<div class="col-lg-5 col-md-5 col-sm-5 col-xs-5">
+    <h1 class="page-header">İletişim</h1>
+    {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}
+            <span class="text-danger"> <b>{{error}}</b> </span>
+        {% endfor %}
+    {% endif %}
+    <form method="get" action="{% url 'iletisim' %}">
+        {% for field in form %}
+        <div class="form-group">
+            <div class="row">
+                <div class="col-lg-2 col-md-2 col-sm-2">
+                    <label class="control-label"> {{ field.label }}</label>
+                </div>
+                <div class="col-lg-10 col-md-10 col-sm-10"> 
+                {{ field }}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                    <br/>
+                        <span class="text-danger"> <b>{{error}}</b> </span>
+                    {% endfor %}
+                {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        <input type="submit" class="btn btn-success btn-sm">
+    </form>
+</div>
+<div class="col-lg-5 col-md-5 col-sm-5 col-xs-5">
+    <h1 class="page-header">Mesajlar</h1>
+    {% for mesaj in mesajlar %}
+    <div class="form-group">
+        <p class="lead">{{ mesaj.isim }} {{ mesaj.soyisim }} {{ mesaj.email }} {{ mesaj.icerik }} </p>
+    </div>
+    {% empty %}
+    <p class="lead"><span class="glyphicon glyphicon-inbox"></span>  Henüz bir mesaj girilmedi </p>
+    {% endfor %}
+</div>
+{% endblock %}
+

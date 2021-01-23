@@ -1,0 +1,14 @@
+{% if users.has_other_pages %}
+    {% if users.has_next %}
+        <div class="row text-center" id="showMore"> 
+            <a id="paginate" 
+            href="{% url 'post_list_favorite_user' post.slug %}?page={{ users.next_page_number }}&username={{username}}" 
+            class="btn btn-link">Daha Fazla Göster.. </a>
+        </div>
+    {% else %}
+        <div class="text-center">
+            <i class="glyphicon glyphicon-chevron-up"></i>
+        </div>
+    {% endif %}
+{% else %}
+{% endif %}

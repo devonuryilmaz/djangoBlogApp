@@ -1,0 +1,13 @@
+<form action="{% url 'add-new-comment' comment.pk 'comment' %}" id="postComment" method="post">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="col-12">
+        <div class="form-group">
+            {{field}}
+        </div>
+    </div>
+    {% endfor %}
+    <div class="col-12 text-right">
+        <button type="submit" class="btn btn-sm btn-success">Yanıtla</button>
+    </div>
+</form>

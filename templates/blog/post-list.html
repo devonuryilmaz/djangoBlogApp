@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block title %}
+    Post List
+{% endblock title %}
+
+{% block ust_icerik %}
+    <script type="text/javascript" rel="script">
+    $(document).ready(function(){
+        $(".post").on('click', '.favorite-button', function(e){
+            e.preventDefault();
+
+            var $this = $(this);
+            var $url = $this.attr('href');
+            $.ajax({
+                url : $url,
+                method : "GET",
+                data: {},
+                success : function(data){
+                    var resp = data.status;
+                    var $span = $this.find('span');
+                    var favCount = data.count;
+
+                    if (resp == "added"){
+                        $span.addClass('active');
+                    }
+                    else{
+                        $span.removeClass('active');   
+                    }
+                    $this.closest('div').find('.favorite-count').html(favCount);
+                }
+            })
+        }).on('click', '.favorite-span', function(e){
+            e.preventDefault();
+            var $this = $(this);
+            var $modal = $("#favorite-modal");
+            var $url = $this.attr('url');
+            var $baslik = $this.closest('div.post').find('h3 a').html();
+
+            $.ajax({
+                url : $url,
+                method: "GET",
+                dataType: "json",
+                beforeSend: function(){
+                    $modal.modal('show'); 
+                },
+                success: function(data){
+                    $modal.find('.modal-title').html($baslik);
+                    $modal.find(".modal-body").html(data.html).append(data.page_html);
+                }
+            });
+        });
+
+        $("#favorite-modal").on('click', 'button.follow_button', function(e){
+            e.preventDefault();
+            
+            var $this = $(this);
+            var $row = $this.closest('div.row');
+            var $url = $this.attr('url');
+            var $followed_user = $this.attr('followed_username');
+            var $follower_user = $this.attr('follower_username');
+            var newData = {'follower_username': $follower_user, 'followed_username': $followed_user};
+            $.ajax({
+                url :  $url,
+                method :"GET",
+                data : newData,
+                success : function(data){
+                    $row.html(data.html).append(data.page_html);
+                }
+            });
+        }).on('click','#paginate', function(e){
+            e.preventDefault();
+            var $this = $(this);
+            var $user_fav_list = $this.closest('.modal-body').find('#user_fav_list');
+            var $this_parent = $this.closest('div');
+            var $url = $this.attr('href');
+
+            $.ajax({
+                url: $url,
+                method:"GET",
+                success: function(data){
+                    $user_fav_list.append(data.html);
+                    $this_parent.remove();
+                    $user_fav_list.after(data.page_html);
+                }
+            })
+        });
+
+    });
+
+    </script>
+
+{% endblock  %}
+
+{% block icerik %}
+<div class="row">
+    <div class="col-lg-12">
+    {% include 'blog/include/favorite-include/favorite-modal.html' %}
+        <div class = "row">
+            <div class="col-lg-12">
+                <form class="form-inline" action="{% url 'post-list' %}">
+                    <div class ="form-group">
+                        {% for field in form %}
+                            {{ field }}
+                            {% for error in field.errors %}
+                                <span class="text-danger"><b>{{error}}</b></span>
+                            {% endfor %}
+                        {% endfor %}
+                        <input class="btn btn-success" value="Sorgula" type="submit">
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% for post in posts %}
+        <div class="post">
+            <h3>
+            <a href="{{ post.get_absolute_url }}"> {{ post.title }}  </a>
+            {{ post.get_yayin_taslak_html}}
+            <a href="{% url 'favorite' post.slug %}" class="favorite-button btn btn-sm btn-default">
+            <span class="glyphicon glyphicon-star {% if request.user.username in post.get_added_favorite_user %}active{% endif %}"></span>
+            </a>
+            <small style="font-size:small"><span class="glyphicon glyphicon-time"></span>{{ post.createdDate }}</small>
+            </h3>
+            {% if post.get_image %}
+            <div>
+                <img class="image-responsive" src="{{ post.get_image }}" style="width:65%">
+                <br>
+            </div>
+            <b><span class="glyphicon glyphicon-user"></span>Yazar - 
+            <a href="{% url 'user-profile' post.user.username %}">{{post.user.username}} </a></b>
+            <br/>
+            <span class="comment-span">
+            <b class="comment-count">{{ post.get_blog_comment_count }} </b><span class="glyphicon glyphicon-comment"></span>
+            </span>
+            <span class="favorite-span" url="{% url 'post_list_favorite_user' post.slug %}">
+            <b class="favorite-count">{{ post.get_favorite_count }} </b><span class="glyphicon glyphicon-star active"></span>
+            </span>
+            {% endif %}
+            <p style="font-size:large;margin-top:1rem" >{{ post.icerik | safe |truncatewords:50}} </p>
+        </div>
+            {% empty%} 
+                <p> Bu blog bulunamadı </p>    
+        {% endfor %}
+    </div>
+    <div class="row">
+        <div class="col-lg-12">
+            {% if posts.has_other_pages %}
+                <ul class="pagination">
+                {% if posts.has_previous  %}
+                    <li><a href="?page={{ posts.previous_page_number }}{% if request.GET.search %}&search={{request.GET.search}}{% endif %}{% if request.GET.taslak_yayin %}&taslak_yayin={{request.GET.taslak_yayin}}{% endif %}">
+                    &laquo;</a></li>
+                {% else %}
+                    <li class="disabled"><span>&laquo;</span></li>
+                {% endif %}
+                {% for i in posts.paginator.page_range %}
+                    {% if posts.number == i %}
+                        <li class="active"><span> {{ i }} <span class="sr-only">(current)</span></span>
+                        </li>
+                    {% else %}
+                        <li ><a href="?page={{i}}{% if request.GET.search %}&search={{request.GET.search}}{% endif %}{% if request.GET.taslak_yayin %}&taslak_yayin={{request.GET.taslak_yayin}}{% endif %}">
+                        {{ i }}</a>
+                        </li>
+                    {% endif %} 
+                {% endfor %}
+                {% if posts.has_next %}
+                     <li><a href="?page={{ posts.next_page_number }}{% if request.GET.search %}&search={{request.GET.search}}{% endif %}{% if request.GET.taslak_yayin %}&taslak_yayin={{request.GET.taslak_yayin}}{% endif %}">
+                     &raquo;</a></li>
+                {% else %}
+                    <li class="disabled"><span>&raquo;</span></li>
+                {% endif %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock icerik %}

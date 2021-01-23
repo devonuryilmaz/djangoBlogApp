@@ -1,0 +1,14 @@
+<div class="takipciler col-lg-offset-3 col-md-offset-3 col-md-3 col-lg-3 text-center">
+    <span><b>Takipçiler</b></span>
+    <button url="{% url 'takipci_takip_edilen_listesi' 'takipciler' %}" follow_type="takipciler" username="{{user.username}}" 
+    class="follow_button btn btn-block btn-primary">
+        {{ takipciler }}
+    </button>
+</div>
+<div class="takip_edilenler col-lg-3 col-md-3 text-center">
+    <span><b>Takip Edilenler</b></span>
+    <button url="{% url 'takipci_takip_edilen_listesi' 'takip_edilenler' %}" follow_type="takip_edilenler" username="{{user.username}}" 
+    class="follow_button btn btn-block btn-success">
+        {{ takip_edilenler }}
+    </button>
+</div>

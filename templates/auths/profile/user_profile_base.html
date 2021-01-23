@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {{ user.userprofile.getScreenName }}
+{% endblock title %}
+
+{% block ust_icerik %}
+    <style rel="stylesheet" type="text/css">
+    .modal-dialog{
+    overflow-y: initial !important
+    }
+    .modal-body{
+        height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+    </style>
+
+    <script type="text/javascript" rel="script">
+        $(document).ready(function(){
+
+            $("#user_following").on('click','.follow_button', function(){
+                var $this = $(this);
+                var $url = $this.attr('url')
+                var $username = $this.attr('username')
+                var $type = $this.attr('follow_type');
+                var $modal = $("#profile_following_modal");
+                $modal.attr('follow_type', $type)
+                if ($type == "takipciler"){
+                    $modal.find(".modal-title").html('Takipçiler')
+                }
+                else{
+                    $modal.find(".modal-title").html('Takip Edilenler')
+                }
+
+                $.ajax({
+                    url : $url,
+                    method : 'GET',
+                    dataType : 'json',
+                    data : {'username': $username},
+                    success : function(data){
+                        $modal.find('#paginate').closest('div').remove();
+                        $modal.find('.modal-body #follow_list').html('').prepend(data.html).after('').after(data.html_paginate);
+                        $modal.modal('show');
+                    }
+                })
+
+                //$modal.modal('show');
+            });
+
+            $('#takip_buton').click(function(){
+                var $this = $(this);
+                var $url = $this.attr('url');
+                var $takip_edilen = $this.attr('followed')
+                var $takip_eden = $this.attr('follower')
+                
+                data = {follower_username: $takip_eden, followed_username: $takip_edilen}
+
+                $.ajax({
+                    url : $url,
+                    type : 'GET',
+                    dataType : 'json',
+                    data : data,
+                    success : function(data){
+                        if (data.is_valid){
+                            $this.html(data.msg);
+                            $("#user_following").html(data.html);
+                        }
+                    }
+                })
+            });
+
+            $('#profile_following_modal').on('click','#follow_list .follow .follow_button', function(){
+                var $this = $(this)
+                var $modal_body = $this.closest('.modal-body');
+                var $modal = $this.closest('.modal');
+                var $follow_type = $modal.attr('follow_type');
+                var $owner = $modal.attr('owner_profile');
+                var $span = $this.closest('.follow').find('span');
+                var $takip_eden = $span.attr('follower')
+                var $takip_edilen = $span.attr('followed')
+                var url = "{% url 'modal-takiplesme' %}"
+                data = {follower_username: $takip_eden, followed_username : $takip_edilen, follow_type : $follow_type, owner : $owner}
+
+                $.ajax({
+                    url : url,
+                    type : 'GET',
+                    dataType : 'json',
+                    data : data,
+                    success : function(data){
+                        if (data.owner){
+                            if (data.follow_type == "takip_edilenler"){
+                                console.log(data)
+                                var $follow_list = $modal_body.find('#follow_list');
+                                $follow_list.html(data.html);
+                                $modal_body.find('#paginate').closest('.row').remove();
+                                $follow_list.after(data.html_paginate)
+                            }
+                            else{
+                                if (data.takip_durum){
+                                $this.removeClass('btn-success');
+                                $this.addClass('btn-danger');
+                            }
+                                else{
+                                $this.removeClass('btn-danger');
+                                $this.addClass('btn-success');
+                            }
+                                $this.html(data.msg)
+                            }
+                            $("#user_following").html(data.html_takip_sayisi)
+                        }
+                        else{
+                            if (data.takip_durum){
+                                $this.removeClass('btn-success');
+                                $this.addClass('btn-danger');
+                            }
+                            else{
+                                $this.removeClass('btn-danger');
+                                $this.addClass('btn-success');
+                            }
+                            $this.html(data.msg)
+                        }
+                    }
+                })
+            }).on('click', '#paginate', function(e){
+                e.preventDefault();
+                var $this = $(this);
+                var $url = $this.attr('href');
+                var $follow_list = $this.closest('.modal').find('#follow_list');
+                var $paginate = $this.closest('.modal').find('#paginate');
+                $.ajax({
+                    url : $url,
+                    dataType: 'json',
+                    method : 'GET',
+                    beforeSend: function(){
+                        var $img = $('<img class="img-responsive" src="{% static 'img/ajax-loader.gif' %}">')
+                        $paginate.html($img);
+                    },
+                    success : function(data){
+                        if (data.is_valid){
+                            $follow_list.append(data.html);
+                            $paginate.remove();
+                            $follow_list.after(data.html_paginate);
+
+                        }
+                    }
+                });
+            });
+        })
+    </script>
+{% endblock ust_icerik %}
+
+{% block icerik %}
+<div class="row">
+    <div class="col-lg-8 user-profile pull-center">
+        {% include 'following/profile/include/following_modal.html' %}
+        {% if request.user != user %}
+            <div>
+                <button followed="{{user.username}}" follower="{{request.user.username}}" url="{% url 'takiplesme' %}" id="takip_buton" class="btn btn-success btn-md">
+                    {% if takip_ediyor_mu %}
+                        <b>Takibi Bırak</b>
+                    {% else %}
+                        <b>Takip Et</b>
+                    {% endif %}
+                </button>
+            </div>
+        {% endif %}
+        <div style="text-align: -moz-center">
+            <img class="img-circle img-responsive user-profile-img" src="{{ user.userprofile.getProfilePhoto }}">
+        </div>
+        <div style="text-align: -moz-center">
+            <br/>
+            {% if user.userprofile.user_full_name %}
+                <span><b> {{user.userprofile.user_full_name}} </b></span>
+                <br/>
+            {% endif %}
+                <span><b> @{{user.username}} </b></span>
+                <br/>
+                <span><b> {{user.userprofile.get_sex_display}} </b></span>
+        </div>
+        <div id="user_following" class="row" style="margin-bottom:2rem">
+            {% include 'auths/profile/include/following/following_partion.html' %}
+        </div>
+        {% if user == request.user %}
+            {% include 'auths/profile/include/owner_navbar.html' %}
+        {% else %}
+            {% include 'auths/profile/include/visitor_navbar.html' %}
+
+        {% endif %} 
+        <div>
+            {% block profil_icerik %}
+                
+            {% endblock profil_icerik %}
+        </div>
+    </div>
+</div>
+{% endblock icerik %}
+
+
+
+
